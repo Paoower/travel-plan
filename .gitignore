@@ -1,0 +1,104 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.mvn/
+.mvn/timing.properties
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.factorypath
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+.mtj.tmp/
+*.jks
+*.keystore
+
+# Gradle (if used)
+.gradle/
+build/
+
+# Spring Boot
+spring-boot-build-info.properties
+application-*.properties
+application-*.yml
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+*.sql.bak
+postgres_data/
+neo4j_data/
+neo4j_logs/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+*.out
+
+# Node (if frontend added)
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+._.DS_Store
+._*
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+.cache/
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# JMeter
+jmeter.log
+bin/
+
+# Sonar
+.sonarqube/
+
+# Dependencies
+.m2/

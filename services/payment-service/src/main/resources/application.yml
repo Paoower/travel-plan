@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: payment-service
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    url: jdbc:postgresql://postgres:5432/travel_plan_payments
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+server:
+  port: 8004
+  servlet:
+    context-path: /api/payments
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka/}
+  instance:
+    hostname: payment-service
+    prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-in-production-32-characters-minimum}
+
+stripe:
+  api-key: ${STRIPE_API_KEY:sk_test_}
+
+paypal:
+  client-id: ${PAYPAL_CLIENT_ID:}
+  client-secret: ${PAYPAL_CLIENT_SECRET:}
+  mode: ${PAYPAL_MODE:sandbox}

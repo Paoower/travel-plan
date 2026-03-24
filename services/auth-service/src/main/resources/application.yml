@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: auth-service
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    url: jdbc:postgresql://postgres:5432/travel_plan_auth
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+server:
+  port: 8001
+  servlet:
+    context-path: /api/auth
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka/}
+  instance:
+    hostname: auth-service
+    prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-in-production-32-characters-minimum}
+  expiration: 86400000

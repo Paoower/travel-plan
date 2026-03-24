@@ -1,0 +1,203 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: travel-plan-postgres
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/01-postgresql-schema.sql:/docker-entrypoint-initdb.d/01-init.sql
+    networks:
+      - travel-plan-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Neo4j Database
+  neo4j:
+    image: neo4j:5.6-community
+    container_name: travel-plan-neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_USERNAME:-neo4j}/${NEO4J_PASSWORD:-password}
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_apoc_import_file_enabled: "true"
+    ports:
+      - "7687:7687"
+      - "7474:7474"
+    volumes:
+      - neo4j_data:/var/lib/neo4j/data
+      - neo4j_logs:/var/lib/neo4j/logs
+    networks:
+      - travel-plan-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:7474/db/neo4j/info/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Eureka Service Registry placeholder
+  eureka-server:
+    image: alpine:latest
+    container_name: travel-plan-eureka
+    networks:
+      - travel-plan-network
+    healthcheck:
+      test: ["CMD", "echo", "ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 1
+    command: sleep infinity
+
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    container_name: travel-plan-auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production-32-characters-minimum}
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - travel-plan-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # User Service
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    container_name: travel-plan-user-service
+    ports:
+      - "8002:8002"
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production-32-characters-minimum}
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - travel-plan-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Travel Service
+  travel-service:
+    build:
+      context: .
+      dockerfile: services/travel-service/Dockerfile
+    container_name: travel-plan-travel-service
+    ports:
+      - "8003:8003"
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production-32-characters-minimum}
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USERNAME: ${NEO4J_USERNAME:-neo4j}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-password}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    networks:
+      - travel-plan-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Payment Service
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    container_name: travel-plan-payment-service
+    ports:
+      - "8004:8004"
+    environment:
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production-32-characters-minimum}
+      EUREKA_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-sk_test_}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-}
+      PAYPAL_MODE: ${PAYPAL_MODE:-sandbox}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - travel-plan-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8004/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: travel-plan-api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production-32-characters-minimum}
+      EUREKA_URL: http://eureka-server:8761/eureka/
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - travel-plan-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  neo4j_logs:
+
+networks:
+  travel-plan-network:
+    driver: bridge

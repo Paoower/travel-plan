@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: travel-service
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    url: jdbc:postgresql://postgres:5432/travel_plan_travels
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+server:
+  port: 8003
+  servlet:
+    context-path: /api/travels
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka/}
+  instance:
+    hostname: travel-service
+    prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-in-production-32-characters-minimum}
+
+neo4j:
+  uri: ${NEO4J_URI:bolt://neo4j:7687}
+  username: ${NEO4J_USERNAME:neo4j}
+  password: ${NEO4J_PASSWORD:password}
