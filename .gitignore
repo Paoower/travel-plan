@@ -102,3 +102,7 @@ bin/
 
 # Dependencies
 .m2/
+
+# Documentation (generated and development docs)
+docs/
+
